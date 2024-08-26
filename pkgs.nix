@@ -1,20 +1,30 @@
-{ yt-dlp, writeShellApplication, ... }:
+{ yt-dlp, jq, writeShellApplication, ... }:
 let
 
-  writeDownloadScript =
-    { obj
+  writeArchiveScript =
+    { name
+    , obj
     , src
     , customFlags ? ""
     ,
     }: writeShellApplication {
-      runtimeInputs = [ yt-dlp ];
+      inherit name;
+      runtimeInputs = [ yt-dlp jq ];
       text = ''
         obj='${obj}'
         src='${src}'
-        echo "$src" > "$obj.source"
-        echo "$(TZ='UTC' date --iso-8601=seconds)" > "$obj.date"
+        archivalDate="$(TZ='UTC' date --iso-8601=seconds)"
+        ytDlpVersion="${yt-dlp.name}"
 
+        jq \
+          -n \
+          --arg 'src' "$src" \
+          --arg 'ytDlpVersion' "$ytDlpVersion" \
+          --arg 'archivalDate' "$archivalDate" \
+          '$ARGS.named' > "$obj.json"
+          
         yt-dlp \
+          --write-link \
           --write-description \
           --write-thumbnail \
           --convert-thumbnails 'png' \
@@ -32,8 +42,9 @@ let
       '';
     };
 in
-{
-  audio = writeDownloadScript {
+rec {
+  archiveCONAFAudio = writeArchiveScript {
+    name = "archive-conaf-audio";
     obj = "Audio";
     src = "https://feeds.simplecast.com/dHoohVNH";
     customFlags = ''
@@ -45,13 +56,28 @@ in
       -o '[%(playlist_index)s][%(upload_date>%Y-%m-%d)s] %(title)s [%(id)s]/%(title)s.%(ext)s' \
     '';
   };
-  video = writeDownloadScript {
+  archiveCONAFVideo = writeArchiveScript {
+    name = "archive-conaf-video";
     obj = "Video";
     src = "https://www.youtube.com/playlist?list=PLVL8S3lUHf0Te3TvS37LaF6dk4rhkc2gg";
     customFlags = ''
       -o '[%(upload_date>%Y-%m-%d)s] %(title)s [%(id)s]/%(title)s.%(ext)s' \
     '';
   };
+  archiveCONAF = writeShellApplication {
+    name = "archive-conaf";
+    runtimeInputs = [
+      archiveCONAFAudio
+      archiveCONAFVideo
+    ];
+    # order here is very important due to audio script
+    # will nearly always fail with non-zero exit code.
+    text = ''
+      archive-conaf-video
+      archive-conaf-audio
+    '';
+  };
+  default = archiveCONAF;
 
 }
      

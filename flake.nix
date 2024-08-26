@@ -10,7 +10,8 @@
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, ... }: {
-        packages.default = pkgs.callPackage ./pkgs.nix { };
+        packages = (pkgs.callPackage ./pkgs.nix { }) // { inherit (pkgs) yt-dlp; };
+        devShells.default = pkgs.mkShell { packages = [ pkgs.yt-dlp ]; };
       };
       flake = {
         # The usual flake attributes can be defined here, including system-
