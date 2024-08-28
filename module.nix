@@ -24,7 +24,7 @@ in
     };
 
     jobs = lib.mkOption {
-      default = [ ];
+      default = { };
       type = lib.types.attrsOf (lib.types.submodule {
         options = {
           workDir = lib.mkOption {
