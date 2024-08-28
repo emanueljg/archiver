@@ -55,5 +55,6 @@
         "$url"
       '';
     };
+  mapLines = f: lines: lib.concatMapStringsSep "\n" f lines;
 }
 

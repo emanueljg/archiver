@@ -23,6 +23,12 @@
                   readOnly = true;
                 };
 
+                mapLines = lib.mkOption {
+                  default = archiver-lib.mapLines;
+                  type = with lib.types; functionTo (functionTo str);
+                  readOnly = true;
+                };
+
               };
           };
         });
