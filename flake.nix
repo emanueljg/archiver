@@ -12,12 +12,7 @@
         ./flake-module.nix
       ];
       systems = [ "x86_64-linux" ];
-      perSystem = { config, self', inputs', pkgs, system, ... }: {
-        packages = {
-          utils = pkgs.callPackage ./utils.nix { };
-        };
-        devShells.default = pkgs.mkShell { packages = [ pkgs.yt-dlp ]; };
-      };
+      perSystem = { config, self', inputs', pkgs, system, ... }: { };
       flake = {
         nixosModules.default = import ./module.nix;
       };
