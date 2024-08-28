@@ -8,9 +8,14 @@
 
   outputs = inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
+      imports = [
+        ./flake-module.nix
+      ];
+      systems = [ "x86_64-linux" ];
       perSystem = { config, self', inputs', pkgs, system, ... }: {
-        packages = (import ./pkgs.nix { inherit pkgs; }) // { inherit (pkgs) yt-dlp; };
+        packages = {
+          utils = pkgs.callPackage ./utils.nix { };
+        };
         devShells.default = pkgs.mkShell { packages = [ pkgs.yt-dlp ]; };
       };
       flake = {
