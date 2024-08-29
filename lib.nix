@@ -26,6 +26,7 @@
     { name
     , url
     , downloadDir
+    , forceDownloadSuccess ? false
     , args ? ""
     }: writeCompatShellApplication {
       inherit name;
@@ -40,6 +41,7 @@
 
         archival_date="$(TZ='UTC' date --iso-8601=seconds)"
         yt_dlp_version="$(yt-dlp --version)"
+        pwd
 
         jq \
           -n \
@@ -52,7 +54,7 @@
       '' + args + ''
         --paths "$download_dir" \
         --download-archive "$archive_path" \
-        "$url"
+        "$url" ${lib.optionalString forceDownloadSuccess "|| true"}
       '';
     };
   mapLines = f: lines: lib.concatMapStringsSep "\n" f lines;

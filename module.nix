@@ -46,61 +46,65 @@ in
           inherit (cfg) group;
           isSystemUser = true;
         };
-        groups = lib.mkIf (cfg.group == "archiver") { archiver = { }; };
       };
+      groups = lib.mkIf (cfg.group == "archiver") { archiver = { }; };
+    };
 
-      systemd = {
-        timers."archiver" = {
-          timerConfig = {
-            OnCalendar = "*-*-* 00:00:00";
-            Unit = "archiver.target";
-          };
+    systemd = {
+      timers."archiver" = {
+        wantedBy = [ "timers.target" "multi-user.target" ];
+        timerConfig = {
+          OnCalendar = "*-*-* 00:00:00";
+          Unit = "archiver.target";
         };
-        targets."archiver" = {
-          Wants = [ "network-online.target" ];
-          After = [ "network-online.target" ];
-        };
-        services = lib.mapAttrs'
-          (jobName: job: lib.nameValuePair
-            "archiver-${jobName}"
-            ({
-              wantedBy = [ "archiver.target" ];
-              after = [ "archiver.target" ];
-              path = [ job.script ];
-              serviceConfig = {
-                ExecStart = lib.getExe job.script;
-                User = cfg.user;
-                Group = cfg.group;
-                ProtectSystem = "strict";
-                ProtectHome = "read-only";
-                WorkingDirectory = job.workDir; # equivalent to the dir above
-                BindReadOnlyPaths = [
-                  builtins.storeDir
-                  # required for youtube DNS lookup
-                  "${config.environment.etc."ssl/certs/ca-certificates.crt".source}:/etc/ssl/certs/ca-certificates.crt"
-                ];
-                CapabilityBoundingSet = "";
-                RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
-                RestrictNamespaces = true;
-                PrivateDevices = true;
-                PrivateUsers = true;
-                ProtectClock = true;
-                ProtectControlGroups = true;
-                ProtectKernelLogs = true;
-                ProtectKernelModules = true;
-                ProtectKernelTunables = true;
-                SystemCallArchitectures = "native";
-                SystemCallFilter = [ "@system-service" "~@privileged" ];
-                RestrictRealtime = true;
-                LockPersonality = true;
-                MemoryDenyWriteExecute = true;
-                ProtectHostname = true;
-              };
-
-            })
-          )
-          cfg.jobs;
       };
+      targets."archiver" = {
+        wants = [ "network-online.target" ];
+        after = [ "network-online.target" ];
+      };
+      services = lib.mapAttrs'
+        (jobName: job: lib.nameValuePair
+          "archiver-${jobName}"
+          ({
+            wantedBy = [ "archiver.target" ];
+            after = [ "archiver.target" ];
+            path = [ job.script ];
+            serviceConfig = {
+              type = "oneshot";
+              ExecStart = lib.getExe job.script;
+              User = cfg.user;
+              Group = cfg.group;
+              SuccessExitStatus = [ 101 ];
+              ProtectSystem = "strict";
+              ProtectHome = "read-only";
+              WorkingDirectory = job.workDir; # equivalent to the dir above
+              ReadWritePaths = lib.escapeShellArgs [ job.workDir ];
+              BindReadOnlyPaths = [
+                builtins.storeDir
+                # required for youtube DNS lookup
+                "${config.environment.etc."ssl/certs/ca-certificates.crt".source}:/etc/ssl/certs/ca-certificates.crt"
+              ];
+              CapabilityBoundingSet = "";
+              RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
+              RestrictNamespaces = true;
+              PrivateDevices = true;
+              PrivateUsers = true;
+              ProtectClock = true;
+              ProtectControlGroups = true;
+              ProtectKernelLogs = true;
+              ProtectKernelModules = true;
+              ProtectKernelTunables = true;
+              SystemCallArchitectures = "native";
+              SystemCallFilter = [ "@system-service" "~@privileged" ];
+              RestrictRealtime = true;
+              LockPersonality = true;
+              MemoryDenyWriteExecute = true;
+              ProtectHostname = true;
+            };
+
+          })
+        )
+        cfg.jobs;
     };
   };
 }
