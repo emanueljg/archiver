@@ -61,6 +61,9 @@ in
       targets."archiver" = {
         wants = [ "network-online.target" ];
         after = [ "network-online.target" ];
+        unitConfig = {
+          StopWhenUnneeded = true;
+        };
       };
       services = lib.mapAttrs'
         (jobName: job: lib.nameValuePair
@@ -68,6 +71,7 @@ in
           ({
             wantedBy = [ "archiver.target" ];
             after = [ "archiver.target" ];
+            upholds = [ "archiver.target" ];
             path = [ job.script ];
             serviceConfig = {
               type = "oneshot";
