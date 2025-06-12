@@ -74,7 +74,7 @@ in
             upholds = [ "archiver.target" ];
             path = [ job.script ];
             serviceConfig = {
-              type = "oneshot";
+              Type = "oneshot";
               ExecStart = lib.getExe job.script;
               User = cfg.user;
               Group = cfg.group;
@@ -82,6 +82,8 @@ in
               ProtectSystem = "strict";
               ProtectHome = "read-only";
               WorkingDirectory = job.workDir; # equivalent to the dir above
+              CacheDirectory = "archiver";
+              RuntimeDirectory = "archiver";
               ReadWritePaths = lib.escapeShellArgs [ job.workDir ];
               BindReadOnlyPaths = [
                 builtins.storeDir

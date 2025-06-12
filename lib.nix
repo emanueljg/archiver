@@ -54,6 +54,7 @@
       '' + args + ''
         --paths "$download_dir" \
         --download-archive "$archive_path" \
+        --cache-dir "/var/cache/archiver" \
         "$url" ${lib.optionalString forceDownloadSuccess "|| true"}
       '';
     };
